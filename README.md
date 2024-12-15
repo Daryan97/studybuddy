@@ -1,3 +1,3 @@
 # StudyBuddy: AI-Powered Quiz App
 
-StudyBuddy is an innovative AI-powered quiz application designed to help students learn and retain information more effectively. By leveraging advanced machine learning algorithms, StudyBuddy creates personalized quizzes that adapt to each user's learning style and progress. Whether you're preparing for exams or just looking to expand your knowledge, StudyBuddy offers a fun and engaging way to study smarter, not harder.
+StudyBuddy is an AI-powered quiz app designed to enhance learning through interactive self-assessment. The app generates quizzes tailored to your knowledge using advanced AI algorithms. After answering the quizzes, you receive a score that reflects your understanding, helping you track your progress and focus on areas for improvement. Whether studying for exams or testing your knowledge, StudyBuddy makes learning engaging and effective.

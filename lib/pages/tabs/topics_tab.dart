@@ -39,7 +39,7 @@ class _TopicsTabState extends State<TopicsTab> {
   Future<void> _refreshTopics() async {
     await Future.delayed(const Duration(seconds: 2));
     setState(() {
-      // TODO: Fetch topics from the server
+      // Refresh screen
     });
   }
 
