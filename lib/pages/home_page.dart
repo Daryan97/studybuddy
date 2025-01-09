@@ -28,9 +28,9 @@ class _HomePageState extends State<HomePage> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          TopicsTab(key: UniqueKey()),
-          AddTab(key: UniqueKey()),
-          ProfileTab(key: UniqueKey()),
+          const TopicsTab(key: PageStorageKey('TopicsTab')),
+          const AddTab(key: PageStorageKey('AddTab')),
+          ProfileTab(key: PageStorageKey('ProfileTab')),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

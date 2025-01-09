@@ -27,7 +27,6 @@ class _ProfileTabState extends State<ProfileTab> {
     _nameController.text = widget.user?.displayName ?? '';
   }
 
-  // Display dialog
   void dialogBox(String title, String content) {
     showDialog(
       context: context,
@@ -48,7 +47,6 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  // Method to update the display name
   void _changeName() {
     showDialog(
       context: context,
@@ -76,16 +74,13 @@ class _ProfileTabState extends State<ProfileTab> {
                   return;
                 }
                 try {
-                  // Update the display name
+  
                   await widget.user?.updateDisplayName(_nameController.text);
 
-                  // Reload user to reflect changes
                   await widget.user?.reload();
 
-                  // Refresh the current user data
                   User? updatedUser = FirebaseAuth.instance.currentUser;
 
-                  // Update the name controller with the new name
                   setState(() {
                     widget.user = updatedUser;
                     _nameController.text = updatedUser?.displayName ?? '';
@@ -105,7 +100,6 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  // Method to log out the user
   void _logout() {
     showDialog(
       context: context,
@@ -134,7 +128,6 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  // Method to change password
   void _changePass() async {
     Navigator.of(context).pop();
     if (_newPasswordController.text != _confirmNewPasswordController.text) {
@@ -165,7 +158,6 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  // Method to change password via dialog
   void _changePassword() {
     showDialog(
       context: context,

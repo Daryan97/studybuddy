@@ -64,7 +64,6 @@ Ensure the correct answer is one of the provided options, and the question and o
 
         if (responseBody['success'] == true &&
             responseBody['result']['response'] != null) {
-          // Parse the JSON string from the response field
           final jsonString = responseBody['result']['response'];
           final parsedJson = jsonDecode(jsonString);
 
