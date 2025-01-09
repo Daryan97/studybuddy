@@ -13,16 +13,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 1;
 
-  final List<Widget> _tabs = [
-    TopicsTab(),
-    AddTab(),
-    ProfileTab(),
-  ];
-
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (mounted) {
+      setState(() {
+        _selectedIndex = index;
+        FocusScope.of(context).unfocus();
+      });
+    }
   }
 
   @override
@@ -30,7 +27,11 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: _tabs,
+        children: [
+          TopicsTab(key: UniqueKey()),
+          AddTab(key: UniqueKey()),
+          ProfileTab(key: UniqueKey()),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,

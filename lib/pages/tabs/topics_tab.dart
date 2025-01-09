@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:studybuddy/models/quiz.dart';
+import 'package:studybuddy/services/user_quizzes.dart';
+import 'package:studybuddy/pages/quiz_page.dart';
 
 class TopicsTab extends StatefulWidget {
   const TopicsTab({super.key});
@@ -8,19 +11,21 @@ class TopicsTab extends StatefulWidget {
 }
 
 class _TopicsTabState extends State<TopicsTab> {
-  final List<Map<String, dynamic>> _allTopics = [
-    {'name': 'Topic 1', 'score': 70},
-    {'name': 'Topic 2', 'score': 85},
-    {'name': 'Topic 3', 'score': 50},
-    {'name': 'Topic 4', 'score': 90},
-    {'name': 'Topic 5', 'score': 65},
-  ];
-  List<Map<String, dynamic>> _filteredTopics = [];
+  List<Quiz> _allTopics = [];
+  List<Quiz> _filteredTopics = [];
+
+  void _getTopics() async {
+    final topics = await UserQuizzes().getQuizzes();
+    setState(() {
+      _allTopics = topics;
+      _filteredTopics = List.from(_allTopics);
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    _filteredTopics = List.from(_allTopics);
+    _getTopics();
   }
 
   void _onSearch(String query) {
@@ -30,7 +35,7 @@ class _TopicsTabState extends State<TopicsTab> {
       } else {
         _filteredTopics = _allTopics
             .where((topic) =>
-                topic['name'].toLowerCase().contains(query.toLowerCase()))
+                topic.prompt.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -39,7 +44,7 @@ class _TopicsTabState extends State<TopicsTab> {
   Future<void> _refreshTopics() async {
     await Future.delayed(const Duration(seconds: 2));
     setState(() {
-      // Refresh screen
+      _getTopics();
     });
   }
 
@@ -71,7 +76,7 @@ class _TopicsTabState extends State<TopicsTab> {
           itemBuilder: (context, index) {
             final topic = _filteredTopics[index];
             return Dismissible(
-              key: Key(topic['name']),
+              key: Key(topic.prompt),
               direction: DismissDirection.endToStart,
               onDismissed: (direction) {
                 setState(() {
@@ -88,8 +93,11 @@ class _TopicsTabState extends State<TopicsTab> {
                         TextButton(
                           onPressed: () {
                             Navigator.of(context).pop();
+                            if (topic.docId != null) {
+                              UserQuizzes().deleteQuiz(topic.docId!);
+                            }
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('${topic['name']} deleted'),
+                              content: Text('${topic.prompt} deleted'),
                             ));
                           },
                           child: const Text('Yes'),
@@ -115,16 +123,28 @@ class _TopicsTabState extends State<TopicsTab> {
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               child: ListTile(
-                title: Text(topic['name']),
+                title: Text(topic.prompt),
                 trailing: CircleAvatar(
-                  backgroundColor: topic['score'] < 60
-                      ? Colors.red
-                      : topic['score'] < 80
-                          ? Colors.orange
-                          : Colors.green,
+                  backgroundColor: topic.score == null
+                      ? Colors.grey
+                      : topic.score! < 50
+                          ? Colors.red
+                          : topic.score! < 75
+                              ? Colors.orange
+                              : Colors.green,
                   foregroundColor: Colors.white,
-                  child: Text('${topic['score'].toString()}%'),
+                  child: Text(topic.score?.toString() ?? '-'),
                 ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => QuizPage(topic.docId),
+                    ),
+                  ).then((_) {
+                    _getTopics();
+                  });
+                },
               ),
             );
           },
