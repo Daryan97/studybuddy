@@ -6,9 +6,9 @@ import 'package:studybuddy/pages/register_page.dart';
 import 'package:studybuddy/pages/tabs/add_tab.dart';
 import 'package:studybuddy/pages/tabs/profile_tab.dart';
 import 'package:studybuddy/pages/tabs/topics_tab.dart';
+import 'package:studybuddy/services/user_role.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,8 +39,10 @@ class MainApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/home': (context) => const HomePage(),
-        '/add': (context) => const AddTab(),
-        '/topics': (context) => TopicsTab(),
+        '/add': (context) => AddTab(role: UserRole().getUserRole()),
+        '/topics': (context) => TopicsTab(
+              role: UserRole().getUserRole(),
+            ),
         '/profile': (context) => ProfileTab(),
       },
     );

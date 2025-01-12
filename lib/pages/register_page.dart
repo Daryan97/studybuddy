@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -14,6 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  String role = 'student';
 
   void dialogBox(String title, String content) {
     showDialog(
@@ -67,11 +69,17 @@ class _RegisterPageState extends State<RegisterPage> {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: emailController.text, password: passwordController.text);
 
-      await FirebaseAuth.instance.currentUser!
-          .updateDisplayName(nameController.text);
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.updateDisplayName(nameController.text);
 
+        await FirebaseFirestore.instance
+            .collection('user_roles')
+            .doc(user.uid)
+            .set({'role': role});
+      }
       Navigator.of(context).pop();
-      Navigator.of(context).pushReplacementNamed('/home');
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     } on FirebaseAuthException catch (e) {
       Navigator.of(context).pop();
 
@@ -148,6 +156,31 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   controller: confirmPasswordController,
                   obscureText: true,
+                ),
+                const SizedBox(
+                  height: 15,
+                ),
+                DropdownButton<String>(
+                  value: role,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'student',
+                      child: Text('I am a student'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'teacher',
+                      child: Text('I am a teacher'),
+                    ),
+                  ],
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      if (newValue != null) {
+                        setState(() {
+                          role = newValue;
+                        });
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(
                   height: 15,

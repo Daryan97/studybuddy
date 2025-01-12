@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:studybuddy/models/quiz.dart';
 import 'package:studybuddy/services/user_quizzes.dart';
 import 'package:studybuddy/pages/quiz_page.dart';
 
 class TopicsTab extends StatefulWidget {
-  const TopicsTab({super.key});
+  final Future<String> role;
+  const TopicsTab({super.key, required this.role});
 
   @override
   _TopicsTabState createState() => _TopicsTabState();
@@ -34,8 +36,10 @@ class _TopicsTabState extends State<TopicsTab> {
         _filteredTopics = List.from(_allTopics);
       } else {
         _filteredTopics = _allTopics
-            .where((topic) =>
-                topic.prompt.toLowerCase().contains(query.toLowerCase()))
+            .where((topic) => topic.docId
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -75,77 +79,152 @@ class _TopicsTabState extends State<TopicsTab> {
           itemCount: _filteredTopics.length,
           itemBuilder: (context, index) {
             final topic = _filteredTopics[index];
-            return Dismissible(
-              key: Key(topic.prompt),
-              direction: DismissDirection.endToStart,
-              onDismissed: (direction) {
-                setState(() {
-                  _filteredTopics.removeAt(index);
-                });
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Delete Topic'),
-                      content: const Text(
-                          'Are you sure you want to delete this topic?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            if (topic.docId != null) {
-                              UserQuizzes().deleteQuiz(topic.docId!);
-                            }
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('${topic.prompt} deleted'),
-                            ));
-                          },
-                          child: const Text('Yes'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _filteredTopics.insert(index, topic);
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('No'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-              background: Container(
-                color: Colors.red,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 20.0),
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              child: ListTile(
-                title: Text(topic.prompt),
-                trailing: CircleAvatar(
-                  backgroundColor: topic.score == null
-                      ? Colors.grey
-                      : topic.score! < 50
-                          ? Colors.red
-                          : topic.score! < 75
-                              ? Colors.orange
-                              : Colors.green,
-                  foregroundColor: Colors.white,
-                  child: Text(topic.score?.toString() ?? '-'),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => QuizPage(topic.docId),
+            return FutureBuilder<String>(
+              future: widget.role,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const ListTile(
+                    title: Text('Loading...'),
+                  );
+                } else if (snapshot.hasError) {
+                  return const ListTile(
+                    title: Text('Error loading role'),
+                  );
+                } else if (snapshot.data == 'teacher') {
+                  return Dismissible(
+                    key: Key(topic.docId),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (direction) {
+                      setState(() {
+                        _filteredTopics.removeAt(index);
+                      });
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Delete Topic'),
+                            content: const Text(
+                                'Are you sure you want to delete this topic?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  if (topic.docId != null) {
+                                    UserQuizzes().deleteQuiz(topic.docId!);
+                                  }
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(
+                                        '${topic.docId.toString()} deleted'),
+                                  ));
+                                },
+                                child: const Text('Yes'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _filteredTopics.insert(index, topic);
+                                  });
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('No'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child: const Icon(Icons.delete, color: Colors.white),
                     ),
-                  ).then((_) {
-                    _getTopics();
-                  });
-                },
-              ),
+                    child: ListTile(
+                      title: Text(topic.docId.toString()),
+                      onTap: () {
+                        if (snapshot.data == 'student') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => QuizPage(topic.docId),
+                            ),
+                          ).then((_) {
+                            _getTopics();
+                          });
+                        } else if (snapshot.data == 'teacher') {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Topic Details'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Prompt: ${topic.prompt}'),
+                                    Text('Difficulty: ${topic.difficulty}'),
+                                    Text('Code: ${topic.docId}'),
+                                    Text(
+                                        'Number of Questions: ${topic.number}'),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Clipboard.setData(
+                                        ClipboardData(text: topic.docId),
+                                      );
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              '${topic.docId} copied to clipboard'),
+                                        ),
+                                      );
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  );
+                } else {
+                  return ListTile(
+                    title: Text(topic.docId),
+                    trailing: FutureBuilder(
+                      future: UserQuizzes().getScore(topic.docId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Text('Loading...');
+                        } else if (snapshot.hasError) {
+                          return const Text('Error loading score');
+                        } else {
+                          return CircleAvatar(
+                            child: Text(snapshot.data.toString()),
+                          );
+                        }
+                      },
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizPage(topic.docId),
+                        ),
+                      ).then((_) {
+                        _getTopics();
+                      });
+                    },
+                  );
+                }
+              },
             );
           },
         ),

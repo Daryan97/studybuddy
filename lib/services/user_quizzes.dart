@@ -11,13 +11,32 @@ class UserQuizzes {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        final userQuizzesSnapshot = await _firestore
-            .collection('user_quizzes')
-            .doc(user.uid)
-            .collection('quizzes')
-            .get();
-        for (var quizDoc in userQuizzesSnapshot.docs) {
-          quizzes.add(Quiz.fromMap(quizDoc.data(), quizDoc.id));
+        final userRole =
+            await _firestore.collection('user_roles').doc(user.uid).get();
+        final role = userRole.data()?['role'];
+        if (role == 'teacher') {
+          final userQuizzesSnapshot = await _firestore
+              .collection('user_quizzes')
+              .doc(user.uid)
+              .collection('quizzes')
+              .get();
+          for (var quizDoc in userQuizzesSnapshot.docs) {
+            quizzes.add(Quiz.fromMap(quizDoc.data(), quizDoc.id));
+          }
+        } else {
+          final userQuizzesSnapshot =
+              await _firestore.collection('user_quizzes').get();
+          for (var userDoc in userQuizzesSnapshot.docs) {
+            final teacherUID = userDoc.id;
+            final quizSnapshot = await _firestore
+                .collection('user_quizzes')
+                .doc(teacherUID)
+                .collection('quizzes')
+                .get();
+            for (var quizDoc in quizSnapshot.docs) {
+              quizzes.add(Quiz.fromMap(quizDoc.data(), quizDoc.id));
+            }
+          }
         }
       }
     } catch (e) {
@@ -29,16 +48,21 @@ class UserQuizzes {
   Future<List<QuizItem>> getQuizItems(dynamic docId) async {
     List<QuizItem> quizItems = [];
     try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        final userQuizItemsSnapshot = await _firestore
+      final userQuizzesSnapshot =
+          await _firestore.collection('user_quizzes').get();
+
+      for (var userDoc in userQuizzesSnapshot.docs) {
+        final teacherUID = userDoc.id;
+
+        final quizSnapshot = await _firestore
             .collection('user_quizzes')
-            .doc(user.uid)
+            .doc(teacherUID)
             .collection('quizzes')
             .doc(docId)
-            .collection("quiz")
+            .collection('quiz')
             .get();
-        for (var quizItemDoc in userQuizItemsSnapshot.docs) {
+
+        for (var quizItemDoc in quizSnapshot.docs) {
           quizItems.add(QuizItem.fromMap(quizItemDoc.data()));
         }
       }
@@ -62,6 +86,11 @@ class UserQuizzes {
           'number': number,
           'prompt': prompt,
         });
+
+        await _firestore
+            .collection('user_quizzes')
+            .doc(user.uid)
+            .set({'created': true}, SetOptions(merge: true));
 
         return Quiz(
           docId: newQuiz.id,
@@ -112,6 +141,18 @@ class UserQuizzes {
     try {
       final user = _auth.currentUser;
       if (user != null) {
+        final quizItemsSnapshot = await _firestore
+            .collection('user_quizzes')
+            .doc(user.uid)
+            .collection('quizzes')
+            .doc(docId)
+            .collection('quiz')
+            .get();
+
+        for (var quizItemDoc in quizItemsSnapshot.docs) {
+          await quizItemDoc.reference.delete();
+        }
+
         await _firestore
             .collection('user_quizzes')
             .doc(user.uid)
@@ -124,20 +165,99 @@ class UserQuizzes {
     }
   }
 
+  Future<Quiz?> joinQuiz(String code) async {
+    try {
+      final userQuizzesSnapshot =
+          await _firestore.collection('user_quizzes').get();
+
+      for (var userDoc in userQuizzesSnapshot.docs) {
+        final teacherUID = userDoc.id;
+
+        final quizSnapshot = await _firestore
+            .collection('user_quizzes')
+            .doc(teacherUID)
+            .collection('quizzes')
+            .where(FieldPath.documentId, isEqualTo: code)
+            .get();
+
+        if (quizSnapshot.docs.isNotEmpty) {
+          final quizData = quizSnapshot.docs.first.data();
+
+          print("Teacher UID: $teacherUID");
+          print("Quiz ID: ${quizSnapshot.docs.first.id}");
+
+          await _firestore
+              .collection('user_quizzes')
+              .doc(teacherUID)
+              .collection('quizzes')
+              .doc(quizSnapshot.docs.first.id)
+              .collection('participants')
+              .doc(_auth.currentUser!.uid)
+              .set({'score': ''});
+
+          return Quiz.fromMap(quizData, quizSnapshot.docs.first.id);
+        }
+      }
+    } catch (e) {
+      print("Error joining quiz: $e");
+    }
+    return null;
+  }
+
   Future<int> submitScore(dynamic docId, int score) async {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        await _firestore
-            .collection('user_quizzes')
-            .doc(user.uid)
-            .collection('quizzes')
-            .doc(docId)
-            .update({'score': score});
+        final userQuizzesSnapshot =
+            await _firestore.collection('user_quizzes').get();
+
+        for (var userDoc in userQuizzesSnapshot.docs) {
+          final teacherUID = userDoc.id;
+
+          final quizSnapshot = await _firestore
+              .collection('user_quizzes')
+              .doc(teacherUID)
+              .collection('quizzes')
+              .doc(docId)
+              .collection('participants')
+              .doc(user.uid)
+              .update({'score': score});
+        }
         return score;
       }
     } catch (e) {
       print("Error submitting score: $e");
+    }
+    return 0;
+  }
+
+  Future<int> getScore(dynamic docId) async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        final userQuizzesSnapshot =
+            await _firestore.collection('user_quizzes').get();
+
+        for (var userDoc in userQuizzesSnapshot.docs) {
+          final teacherUID = userDoc.id;
+
+          final quizSnapshot = await _firestore
+              .collection('user_quizzes')
+              .doc(teacherUID)
+              .collection('quizzes')
+              .doc(docId)
+              .collection('participants')
+              .doc(user.uid)
+              .get();
+
+          if (quizSnapshot.exists) {
+            final score = quizSnapshot.data()?['score'];
+            return score;
+          }
+        }
+      }
+    } catch (e) {
+      print("Error getting score: $e");
     }
     return 0;
   }

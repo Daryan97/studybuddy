@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:studybuddy/pages/tabs/add_tab.dart';
 import 'package:studybuddy/pages/tabs/profile_tab.dart';
 import 'package:studybuddy/pages/tabs/topics_tab.dart';
+import 'package:studybuddy/services/user_role.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,14 +23,19 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<String> getRole() async {
+    UserRole userRole = UserRole();
+    return await userRole.getUserRole();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          const TopicsTab(key: PageStorageKey('TopicsTab')),
-          const AddTab(key: PageStorageKey('AddTab')),
+          TopicsTab(key: PageStorageKey('TopicsTab'), role: getRole(),),
+          AddTab(key: PageStorageKey('AddTab'), role: getRole(),),
           ProfileTab(key: PageStorageKey('ProfileTab')),
         ],
       ),
