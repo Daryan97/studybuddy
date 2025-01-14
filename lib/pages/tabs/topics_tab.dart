@@ -36,7 +36,7 @@ class _TopicsTabState extends State<TopicsTab> {
         _filteredTopics = List.from(_allTopics);
       } else {
         _filteredTopics = _allTopics
-            .where((topic) => topic.docId
+            .where((topic) => topic.prompt
                 .toString()
                 .toLowerCase()
                 .contains(query.toLowerCase()))

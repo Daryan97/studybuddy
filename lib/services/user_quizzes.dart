@@ -214,7 +214,7 @@ class UserQuizzes {
         for (var userDoc in userQuizzesSnapshot.docs) {
           final teacherUID = userDoc.id;
 
-          final quizSnapshot = await _firestore
+          await _firestore
               .collection('user_quizzes')
               .doc(teacherUID)
               .collection('quizzes')
