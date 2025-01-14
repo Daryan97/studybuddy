@@ -141,7 +141,7 @@ class _TopicsTabState extends State<TopicsTab> {
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
                     child: ListTile(
-                      title: Text(topic.docId.toString()),
+                      title: Text(topic.prompt),
                       onTap: () {
                         if (snapshot.data == 'student') {
                           Navigator.push(
@@ -172,6 +172,12 @@ class _TopicsTabState extends State<TopicsTab> {
                                 actions: [
                                   TextButton(
                                     onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
                                       Clipboard.setData(
                                         ClipboardData(text: topic.docId),
                                       );
@@ -184,7 +190,7 @@ class _TopicsTabState extends State<TopicsTab> {
                                       );
                                       Navigator.of(context).pop();
                                     },
-                                    child: const Text('OK'),
+                                    child: const Text('Copy code'),
                                   ),
                                 ],
                               );
@@ -196,7 +202,7 @@ class _TopicsTabState extends State<TopicsTab> {
                   );
                 } else {
                   return ListTile(
-                    title: Text(topic.docId),
+                    title: Text(topic.prompt),
                     trailing: FutureBuilder(
                       future: UserQuizzes().getScore(topic.docId),
                       builder: (context, snapshot) {

@@ -26,11 +26,6 @@ class _QuizPageState extends State<QuizPage> {
   Future<void> getQuizItems() async {
     quizItems = await UserQuizzes().getQuizItems(widget.docId);
 
-
-    for (var quiz in quizItems) {
-      quiz.options.shuffle(Random());
-    }
-
     setState(() {
       isLoading = false;
     });

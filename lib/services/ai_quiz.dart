@@ -34,11 +34,11 @@ class WorkersAI {
       final payload = {
         "prompt": '''
 Generate $number quizzes on the topic "$topic" at a "$difficulty" difficulty level. Ensure that:
-1. Each quiz has a valid question, 4 unique and logical options, and one correct answer.
-2. The correct answer must be accurate and logically consistent with the question.
-3. The correct answer must be one of the provided options in same text and capitalization.
-4. Avoid any type of questions that is not text-based.
-5. Return the response in the following valid JSON format without any additional text or formatting:
+1. Each quiz contains a valid question, four unique and logical options, and one correct answer.
+2. The correct answer must be accurate, logically consistent with the question, and clearly identified.
+3. The correct answer must exactly match one of the provided options in text and capitalization.
+4. All questions and options must be text-based and clearly written. Avoid non-text-based or ambiguous content.
+5. Return the response in the following valid JSON format, without any additional text or formatting:
 [
   {
     "question": "Sample question?",
@@ -46,7 +46,8 @@ Generate $number quizzes on the topic "$topic" at a "$difficulty" difficulty lev
     "correct": "Option 2"
   }
 ]
-Ensure the correct answer is one of the provided options, and the question and options are clear, coherent, and accurate.
+6. Ensure that the provided correct answer is written as is and not as a letter or other shorthand (e.g., "A", "B", etc.).
+7. Verify that the question and its options are coherent, accurate, and aligned with the specified difficulty level.
 ''',
       };
 
